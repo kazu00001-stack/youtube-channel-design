@@ -3,7 +3,7 @@
  */
 
 const STORAGE_KEY = "yt_tool1_settings";
-const MODEL = "gemini-2.0-flash";
+const MODEL = "gemini-2.5-flash";
 
 const GENRE_LABELS = {
   auto: "おまかせ（参考チャンネルから推定）",

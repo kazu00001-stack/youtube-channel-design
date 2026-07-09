@@ -3,7 +3,7 @@
  * APIキーはリクエスト body で受け取り、サーバーに保存しない
  */
 
-const DEFAULT_MODEL = "gemini-2.0-flash";
+const DEFAULT_MODEL = "gemini-2.5-flash";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
