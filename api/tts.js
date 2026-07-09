@@ -1,18 +1,41 @@
 /**
  * Vercel Serverless — Gemini TTS（音声生成）
+ * 500 はプレビュー版で散発するため自動リトライ・短チャンク推奨
  */
 
 const TTS_MODEL = "gemini-2.5-flash-preview-tts";
+const MAX_TEXT_LEN = 1500;
+const MAX_RETRIES = 4;
 
-function buildTtsPrompt(text) {
-  const transcript = String(text).trim();
-  // TTSモデルは「読み上げ台本」であることが明確なプロンプトが必要
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function sanitizeTranscript(text) {
+  return String(text)
+    .trim()
+    .replace(/```/g, "'''")
+    .replace(/\u0000/g, "")
+    .slice(0, MAX_TEXT_LEN);
+}
+
+function buildTtsPrompt(text, variant = 0) {
+  const transcript = sanitizeTranscript(text);
+  if (variant === 0) {
+    return [
+      "Synthesize speech for the following Japanese narration transcript.",
+      "Read it aloud in a calm, clear voice.",
+      "",
+      "#### TRANSCRIPT",
+      transcript,
+      "",
+      "Now generate the audio for this script.",
+    ].join("\n");
+  }
   return [
-    "Read the following Japanese narration script aloud in a calm, clear voice.",
+    "Read the following Japanese text aloud in a calm, clear narration voice.",
     "",
-    "```",
     transcript,
-    "```",
     "",
     "Now generate the audio for this script.",
   ].join("\n");
@@ -47,26 +70,14 @@ function pcmToWav(pcmBuffer, sampleRate = 24000) {
   return Buffer.concat([header, pcmBuffer]);
 }
 
-export default async function handler(req, res) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
-  }
+function isRetryable(status, message) {
+  if ([429, 500, 502, 503].includes(status)) return true;
+  return /internal error|overloaded|try again|resource exhausted/i.test(message || "");
+}
 
-  const { apiKey, text, voice = "Kore" } = req.body || {};
-
-  if (!apiKey) return res.status(400).json({ error: "APIキーが必要です" });
-  if (!text || !String(text).trim()) return res.status(400).json({ error: "text が必要です" });
-
-  const narration = String(text).trim().slice(0, 4500);
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${TTS_MODEL}:generateContent?key=${encodeURIComponent(apiKey)}`;
-
-  const body = {
-    contents: [
-      {
-        role: "user",
-        parts: [{ text: buildTtsPrompt(narration) }],
-      },
-    ],
+function buildRequestBody(narration, voice, variant) {
+  return {
+    contents: [{ parts: [{ text: buildTtsPrompt(narration, variant) }] }],
     generationConfig: {
       responseModalities: ["AUDIO"],
       speechConfig: {
@@ -76,25 +87,45 @@ export default async function handler(req, res) {
       },
     },
   };
+}
 
-  try {
+async function requestTts(apiKey, narration, voice) {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${TTS_MODEL}:generateContent?key=${encodeURIComponent(apiKey)}`;
+  let lastError = "TTS failed";
+
+  for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+    if (attempt > 0) await sleep(1200 * attempt);
+
+    const variant = attempt % 2;
+    const body = buildRequestBody(narration, voice, variant);
+
     const geminiRes = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     });
 
-    const data = await geminiRes.json();
+    let data;
+    try {
+      data = await geminiRes.json();
+    } catch {
+      lastError = `Gemini TTS error (${geminiRes.status})`;
+      if (isRetryable(geminiRes.status, lastError) && attempt < MAX_RETRIES - 1) continue;
+      return { ok: false, status: geminiRes.status, error: lastError };
+    }
 
     if (!geminiRes.ok) {
-      const msg = data?.error?.message || `Gemini TTS error (${geminiRes.status})`;
-      return res.status(geminiRes.status).json({ error: msg });
+      lastError = data?.error?.message || `Gemini TTS error (${geminiRes.status})`;
+      if (isRetryable(geminiRes.status, lastError) && attempt < MAX_RETRIES - 1) continue;
+      return { ok: false, status: geminiRes.status, error: lastError };
     }
 
     const parts = data?.candidates?.[0]?.content?.parts || [];
     const audioPart = parts.find((p) => p.inlineData?.data);
     if (!audioPart) {
-      return res.status(502).json({ error: "音声データが返りませんでした" });
+      lastError = "音声データが返りませんでした";
+      if (attempt < MAX_RETRIES - 1) continue;
+      return { ok: false, status: 502, error: lastError };
     }
 
     const rawMime = audioPart.inlineData.mimeType || "audio/wav";
@@ -108,9 +139,30 @@ export default async function handler(req, res) {
       outData = wav.toString("base64");
     }
 
+    return { ok: true, mimeType: outMime, data: outData };
+  }
+
+  return { ok: false, status: 502, error: `${lastError}（${MAX_RETRIES}回再試行後）` };
+}
+
+export default async function handler(req, res) {
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Method not allowed" });
+  }
+
+  const { apiKey, text, voice = "Kore" } = req.body || {};
+
+  if (!apiKey) return res.status(400).json({ error: "APIキーが必要です" });
+  if (!text || !String(text).trim()) return res.status(400).json({ error: "text が必要です" });
+
+  try {
+    const result = await requestTts(apiKey, String(text).trim(), voice);
+    if (!result.ok) {
+      return res.status(result.status).json({ error: result.error });
+    }
     return res.status(200).json({
-      mimeType: outMime,
-      data: outData,
+      mimeType: result.mimeType,
+      data: result.data,
     });
   } catch (err) {
     console.error(err);

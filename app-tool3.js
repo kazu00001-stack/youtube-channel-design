@@ -108,18 +108,23 @@ async function callTts(apiKey, text, voice) {
   return base64ToBlob(data.data, data.mimeType || "audio/wav");
 }
 
-function splitNarration(text, maxLen = 4000) {
+function splitNarration(text, maxLen = 1200) {
   const chunks = [];
   let rest = text.trim();
   while (rest.length > maxLen) {
     let cut = rest.lastIndexOf("。", maxLen);
-    if (cut < maxLen * 0.5) cut = maxLen;
+    if (cut < maxLen * 0.4) cut = rest.lastIndexOf("、", maxLen);
+    if (cut < maxLen * 0.3) cut = maxLen;
     else cut += 1;
     chunks.push(rest.slice(0, cut).trim());
     rest = rest.slice(cut).trim();
   }
   if (rest) chunks.push(rest);
   return chunks;
+}
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 async function generateTool3() {
@@ -171,6 +176,7 @@ async function generateTool3() {
     const audioParts = [];
     for (let i = 0; i < chunks.length; i++) {
       setStatus(`③ 音声生成 ${i + 1}/${chunks.length}…`);
+      if (i > 0) await sleep(800);
       audioParts.push(await callTts(apiKey, chunks[i], params.voice));
     }
     const audioBlob =

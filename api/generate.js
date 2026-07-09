@@ -51,30 +51,43 @@ export default async function handler(req, res) {
   }
 
   try {
-    const geminiRes = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
+    let lastError = "Gemini API error";
+    for (let attempt = 0; attempt < 3; attempt++) {
+      if (attempt > 0) await new Promise((r) => setTimeout(r, 1500 * attempt));
 
-    const data = await geminiRes.json();
+      const geminiRes = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
 
-    if (!geminiRes.ok) {
-      const msg =
-        data?.error?.message ||
-        data?.error?.status ||
-        `Gemini API error (${geminiRes.status})`;
-      return res.status(geminiRes.status).json({ error: msg });
+      const data = await geminiRes.json();
+
+      if (!geminiRes.ok) {
+        lastError =
+          data?.error?.message ||
+          data?.error?.status ||
+          `Gemini API error (${geminiRes.status})`;
+        const retryable =
+          [429, 500, 502, 503].includes(geminiRes.status) ||
+          /internal error|overloaded|try again/i.test(lastError);
+        if (retryable && attempt < 2) continue;
+        return res.status(geminiRes.status).json({ error: lastError });
+      }
+
+      const parts = data?.candidates?.[0]?.content?.parts || [];
+      const text = parts.map((p) => p.text || "").join("\n").trim();
+
+      if (!text) {
+        lastError = "生成結果が空でした。もう一度お試しください。";
+        if (attempt < 2) continue;
+        return res.status(502).json({ error: lastError });
+      }
+
+      return res.status(200).json({ text });
     }
 
-    const parts = data?.candidates?.[0]?.content?.parts || [];
-    const text = parts.map((p) => p.text || "").join("\n").trim();
-
-    if (!text) {
-      return res.status(502).json({ error: "生成結果が空でした。もう一度お試しください。" });
-    }
-
-    return res.status(200).json({ text });
+    return res.status(502).json({ error: lastError });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: err.message || "Internal server error" });
