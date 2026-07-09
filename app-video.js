@@ -1,87 +1,55 @@
 /**
- * ffmpeg.wasm で静止画 + 音声 → MP4
+ * サーバーAPI経由で音声結合・MP4合成（ffmpeg.wasm の Worker 問題を回避）
  */
 
-let ffmpegInstance = null;
-let loadPromise = null;
-
-async function loadFfmpeg(onProgress) {
-  if (ffmpegInstance) return ffmpegInstance;
-  if (loadPromise) return loadPromise;
-
-  loadPromise = (async () => {
-    onProgress?.("動画エンジンを読み込み中…（初回のみ30秒ほど）");
-    const { FFmpeg } = await import("https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.10/dist/esm/index.js");
-    const { toBlobURL } = await import("https://cdn.jsdelivr.net/npm/@ffmpeg/util@0.12.1/dist/esm/index.js");
-
-    const ffmpeg = new FFmpeg();
-    const base = "https://cdn.jsdelivr.net/npm/@ffmpeg/core-st@0.12.10/dist/esm";
-    await ffmpeg.load({
-      coreURL: await toBlobURL(`${base}/ffmpeg-core.js`, "text/javascript"),
-      wasmURL: await toBlobURL(`${base}/ffmpeg-core.wasm`, "application/wasm"),
-    });
-    ffmpegInstance = ffmpeg;
-    return ffmpeg;
-  })();
-
-  return loadPromise;
-}
-
-export async function mergeImageAndAudio(imageBlob, audioBlob, onProgress) {
-  const ffmpeg = await loadFfmpeg(onProgress);
-  const { fetchFile } = await import("https://cdn.jsdelivr.net/npm/@ffmpeg/util@0.12.1/dist/esm/index.js");
-
-  const ext = audioBlob.type.includes("wav") ? "wav" : "mp3";
-  await ffmpeg.writeFile("slide.png", await fetchFile(imageBlob));
-  await ffmpeg.writeFile(`audio.${ext}`, await fetchFile(audioBlob));
-
-  onProgress?.("MP4を合成中…");
-
-  await ffmpeg.exec([
-    "-loop", "1",
-    "-i", "slide.png",
-    "-i", `audio.${ext}`,
-    "-c:v", "libx264",
-    "-tune", "stillimage",
-    "-c:a", "aac",
-    "-b:a", "128k",
-    "-pix_fmt", "yuv420p",
-    "-shortest",
-    "-movflags", "+faststart",
-    "output.mp4",
-  ]);
-
-  const data = await ffmpeg.readFile("output.mp4");
-  await ffmpeg.deleteFile("slide.png");
-  await ffmpeg.deleteFile(`audio.${ext}`);
-  await ffmpeg.deleteFile("output.mp4");
-
-  return new Blob([data.buffer], { type: "video/mp4" });
+async function blobToBase64(blob) {
+  const buf = await blob.arrayBuffer();
+  let binary = "";
+  const bytes = new Uint8Array(buf);
+  for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+  return btoa(binary);
 }
 
 export async function concatAudioBlobs(blobs, onProgress) {
   if (blobs.length === 1) return blobs[0];
 
-  const ffmpeg = await loadFfmpeg(onProgress);
-  const { fetchFile } = await import("https://cdn.jsdelivr.net/npm/@ffmpeg/util@0.12.1/dist/esm/index.js");
+  onProgress?.("音声を結合中（サーバー）…");
+  const parts = await Promise.all(blobs.map(blobToBase64));
+  const res = await fetch("/api/concat-audio", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ parts }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "音声結合に失敗しました");
 
-  let listContent = "";
-  for (let i = 0; i < blobs.length; i++) {
-    const name = `part${i}.wav`;
-    await ffmpeg.writeFile(name, await fetchFile(blobs[i]));
-    listContent += `file '${name}'\n`;
-  }
-  await ffmpeg.writeFile("list.txt", listContent);
+  const bin = atob(data.data);
+  const arr = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+  return new Blob([arr], { type: data.mimeType || "audio/wav" });
+}
 
-  onProgress?.("音声を結合中…");
-  await ffmpeg.exec(["-f", "concat", "-safe", "0", "-i", "list.txt", "-c", "copy", "merged.wav"]);
+export async function mergeImageAndAudio(imageBlob, audioBlob, onProgress) {
+  onProgress?.("MP4を合成中（サーバー）…");
+  const [imageBase64, audioBase64] = await Promise.all([
+    blobToBase64(imageBlob),
+    blobToBase64(audioBlob),
+  ]);
 
-  const data = await ffmpeg.readFile("merged.wav");
-  for (let i = 0; i < blobs.length; i++) {
-    await ffmpeg.deleteFile(`part${i}.wav`);
-  }
-  await ffmpeg.deleteFile("list.txt");
-  await ffmpeg.deleteFile("merged.wav");
+  const res = await fetch("/api/merge-video", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      imageBase64,
+      audioBase64,
+      audioMime: audioBlob.type,
+    }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "MP4合成に失敗しました");
 
-  return new Blob([data.buffer], { type: "audio/wav" });
+  const bin = atob(data.data);
+  const arr = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+  return new Blob([arr], { type: data.mimeType || "video/mp4" });
 }

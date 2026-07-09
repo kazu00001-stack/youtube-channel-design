@@ -177,19 +177,27 @@ async function generateTool3() {
         ? await concatAudioBlobs(audioParts, (m) => setStatus(`③ ${m}`))
         : audioParts[0];
     lastAssets.audioBlob = audioBlob;
-
-    setStatus("④ MP4を合成中…");
-    const slideCanvas = renderVideoSlide({
-      title: parsed.video_title_slide || parsed.title,
-      genre,
-    });
-    const slideBlob = await canvasToBlob(slideCanvas);
-    const mp4Blob = await mergeImageAndAudio(slideBlob, audioBlob, (m) => setStatus(`④ ${m}`));
-    lastAssets.mp4Blob = mp4Blob;
-
-    els.videoPreview.src = URL.createObjectURL(mp4Blob);
     els.outputSection.classList.remove("hidden");
-    setStatus("完成！サムネ・音声・MP4をダウンロードできます。", "ok");
+
+    try {
+      setStatus("④ MP4を合成中…");
+      const slideCanvas = renderVideoSlide({
+        title: parsed.video_title_slide || parsed.title,
+        genre,
+      });
+      const slideBlob = await canvasToBlob(slideCanvas);
+      const mp4Blob = await mergeImageAndAudio(slideBlob, audioBlob, (m) => setStatus(`④ ${m}`));
+      lastAssets.mp4Blob = mp4Blob;
+      els.videoPreview.src = URL.createObjectURL(mp4Blob);
+      setStatus("完成！サムネ・音声・MP4をダウンロードできます。", "ok");
+    } catch (videoErr) {
+      console.error(videoErr);
+      setStatus(
+        `サムネ・音声は完成しました。MP4合成のみ失敗: ${videoErr.message}（音声・サムネはダウンロード可）`,
+        "ok"
+      );
+    }
+
     els.outputSection.scrollIntoView({ behavior: "smooth", block: "start" });
   } catch (err) {
     console.error(err);
