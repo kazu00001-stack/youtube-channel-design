@@ -55,6 +55,19 @@ export function saveToolSettings(toolKey, patch) {
   saveSettings({ ...current, [toolKey]: tool, ...(patch.apiKey ? { apiKey: patch.apiKey } : {}) });
 }
 
+export async function parseJsonResponse(res) {
+  const text = await res.text();
+  try {
+    return JSON.parse(text);
+  } catch {
+    const preview = text.slice(0, 120).replace(/\s+/g, " ").trim();
+    if (res.status === 413 || /entity too large/i.test(text)) {
+      throw new Error("データが大きすぎます。台本を短くしてください。");
+    }
+    throw new Error(preview || `HTTP ${res.status}`);
+  }
+}
+
 export async function callGemini(apiKey, systemPrompt, userPrompt, options = {}) {
   const { useSearch = false, maxOutputTokens = 8192 } = options;
   const res = await fetch("/api/generate", {
@@ -69,7 +82,7 @@ export async function callGemini(apiKey, systemPrompt, userPrompt, options = {})
       maxOutputTokens,
     }),
   });
-  const data = await res.json();
+  const data = await parseJsonResponse(res);
   if (!res.ok) throw new Error(data.error || `API error ${res.status}`);
   return data.text;
 }

@@ -4,6 +4,7 @@ import {
   extractJson,
   getApiKey,
   loadSettings,
+  parseJsonResponse,
   saveToolSettings,
 } from "./app-shared.js";
 import {
@@ -102,7 +103,7 @@ async function callTts(apiKey, text, voice) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ apiKey, text, voice }),
   });
-  const data = await res.json();
+  const data = await parseJsonResponse(res);
   if (!res.ok) throw new Error(data.error || "TTS failed");
   return base64ToBlob(data.data, data.mimeType || "audio/wav");
 }
