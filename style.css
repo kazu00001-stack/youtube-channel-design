@@ -240,6 +240,23 @@ textarea { resize: vertical; min-height: 100px; }
   display: block;
 }
 
+.local-tool {
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.local-steps {
+  margin: 0.75rem 0 1rem;
+  padding-left: 1.25rem;
+  line-height: 1.7;
+}
+
+.local-tool .btn-secondary {
+  display: inline-block;
+  text-decoration: none;
+  text-align: center;
+}
+
 .preview-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;

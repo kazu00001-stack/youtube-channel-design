@@ -3,19 +3,18 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>非属人YouTube作成ツール（Tool1〜3）</title>
-  <meta name="description" content="非属人YouTube向け。Tool1:設計 / Tool2:台本 / Tool3:MP4+サムネ。Gemini API。">
+  <title>非属人YouTube作成ツール（Tool1・Tool2）</title>
+  <meta name="description" content="非属人YouTube向け。Tool1:設計 / Tool2:台本。動画化はPC用ZIPツール。">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <header class="site-header">
     <h1>非属人YouTube作成ツール</h1>
-    <p class="lead">Tool1<strong>チャンネル設計</strong> → Tool2<strong>競合＋台本</strong> → Tool3<strong>MP4＋サムネ</strong>。</p>
-    <p class="notice">⚠️ 出てきた内容は必ず手直ししてください。※Tool3は<strong>解説・朗読型（静止画＋ナレーション）</strong>に最適です。長尺台本は時間がかかります。</p>
+    <p class="lead">Tool1<strong>チャンネル設計</strong> → Tool2<strong>競合＋台本</strong> → <strong>PCで動画化</strong>（ZIPツール）。</p>
+    <p class="notice">⚠️ 出てきた内容は必ず手直ししてください。動画の本番合成は<strong>お手元のPC</strong>で行います（フリー素材＋字幕＋BGM）。</p>
     <nav class="tool-tabs" aria-label="ツール選択">
       <button type="button" class="tool-tab active" data-tool="tool1">Tool1 設計</button>
       <button type="button" class="tool-tab" data-tool="tool2">Tool2 台本</button>
-      <button type="button" class="tool-tab" data-tool="tool3">Tool3 動画</button>
     </nav>
   </header>
 
@@ -140,75 +139,24 @@
         </div>
         <pre id="t2-output" class="output-body"></pre>
       </section>
-    </div>
-
-    <!-- Tool3 -->
-    <div id="panel-tool3" class="tool-panel">
-      <section class="card step">
-        <h2><span class="step-num">1</span>台本を投入</h2>
-        <p class="hint">Tool2で出した台本（または自作）を貼り付け。短尺（〜2,000字）が最も早く完成します。</p>
-        <label class="field">
-          <span>台本全文 <em>必須</em></span>
-          <textarea id="t3-script" rows="10" placeholder="Tool2の「4. 台本」セクションをそのまま貼り付け"></textarea>
-        </label>
-        <div class="field-row">
-          <label class="field">
-            <span>サムネ上段 <em>任意</em></span>
-            <input type="text" id="t3-thumb-top" placeholder="空欄なら台本から自動">
-          </label>
-          <label class="field">
-            <span>サムネ下段 <em>任意</em></span>
-            <input type="text" id="t3-thumb-bottom" placeholder="空欄なら台本から自動">
-          </label>
-        </div>
-        <div class="field-row">
-          <label class="field">
-            <span>ジャンル</span>
-            <select id="t3-genre">
-              <option value="commentary">解説型</option>
-              <option value="narration">朗読型</option>
-              <option value="ranking">ランキング型</option>
-            </select>
-          </label>
-          <label class="field">
-            <span>ナレーション声</span>
-            <select id="t3-voice">
-              <option value="Kore">落ち着いた男性（解説向け）</option>
-              <option value="Puck">明るめ</option>
-              <option value="Charon">低め・重厚</option>
-            </select>
-          </label>
-        </div>
-      </section>
-      <section class="card step">
-        <h2><span class="step-num">2</span>MP4＋サムネを生成</h2>
-        <p class="hint">台本解析 → サムネPNG → 音声（Gemini TTS・自動リトライ）→ MP4合成（ブラウザ内）。短尺（〜2,000字）推奨。</p>
-        <button type="button" id="t3-btn-generate" class="btn-primary" disabled>MP4＋サムネを生成</button>
-        <p id="t3-status" class="status" aria-live="polite"></p>
-      </section>
-      <section class="card output hidden" id="t3-output-section">
-        <h2>生成結果</h2>
-        <div class="preview-grid">
-          <div class="preview-box">
-            <p class="preview-label">サムネイル</p>
-            <img id="t3-thumb-preview" alt="サムネプレビュー" class="preview-img">
-            <button type="button" id="t3-btn-thumb" class="btn-secondary">PNGダウンロード</button>
-          </div>
-          <div class="preview-box">
-            <p class="preview-label">動画 MP4</p>
-            <video id="t3-video-preview" class="preview-video" controls playsinline></video>
-            <div class="preview-actions">
-              <button type="button" id="t3-btn-mp4" class="btn-secondary">MP4ダウンロード</button>
-              <button type="button" id="t3-btn-audio" class="btn-secondary">音声のみ</button>
-            </div>
-          </div>
-        </div>
+      <section class="card step local-tool">
+        <h2><span class="step-num">3</span>PCで動画化（ZIPツール）</h2>
+        <p class="hint">Tool2の台本を Markdown で保存し、お手元のPCで MP4 を生成します。</p>
+        <ul class="local-steps">
+          <li>下の ZIP をダウンロードして解凍</li>
+          <li>初回セットアップ → <code>settings.json</code> に API キーを設定</li>
+          <li>台本を <code>台本.md</code> に貼り付け → <code>動画生成.py</code> を実行</li>
+        </ul>
+        <p>
+          <a class="btn-secondary" href="https://github.com/kazu00001-stack/youtube-narration-video/releases/download/v1.0.0/youtube-narration-video.zip" target="_blank" rel="noopener">YouTubeナレーション動画生成 ZIP</a>
+        </p>
+        <p class="hint">出力: 1080p MP4（フリー素材＋字幕＋BGM＋ナレーション）</p>
       </section>
     </div>
   </main>
 
   <footer class="site-footer">
-    <p>Tool1 設計 ｜ Tool2 台本 ｜ Tool3 MP4＋サムネ</p>
+    <p>Tool1 設計 ｜ Tool2 台本 ｜ 動画化は PC 用 ZIP</p>
   </footer>
 
   <script type="module" src="app.js"></script>

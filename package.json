@@ -1,8 +1,0 @@
-{
-  "name": "youtube-channel-design",
-  "private": true,
-  "type": "module",
-  "dependencies": {
-    "ffmpeg-static": "^5.2.0"
-  }
-}
