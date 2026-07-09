@@ -111,11 +111,14 @@ export function initTabs() {
       const target = tab.dataset.tool;
       tabs.forEach((t) => t.classList.toggle("active", t === tab));
       panels.forEach((p) => p.classList.toggle("active", p.id === `panel-${target}`));
-      history.replaceState(null, "", target === "tool2" ? "#tool2" : "#tool1");
+      const hash = target === "tool1" ? "#tool1" : target === "tool2" ? "#tool2" : "#tool3";
+      history.replaceState(null, "", hash);
     });
   });
   if (location.hash === "#tool2") {
     document.querySelector('[data-tool="tool2"]')?.click();
+  } else if (location.hash === "#tool3") {
+    document.querySelector('[data-tool="tool3"]')?.click();
   }
 }
 
