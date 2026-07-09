@@ -206,3 +206,36 @@ textarea { resize: vertical; min-height: 100px; }
   color: var(--muted);
   font-size: 0.82rem;
 }
+
+.tool-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1.25rem;
+}
+
+.tool-tab {
+  flex: 1;
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 600;
+  padding: 0.65rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.tool-tab.active {
+  background: linear-gradient(135deg, var(--accent), #cc0000);
+  color: #fff;
+  border-color: transparent;
+}
+
+.tool-panel {
+  display: none;
+}
+
+.tool-panel.active {
+  display: block;
+}

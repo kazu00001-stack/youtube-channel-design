@@ -3,28 +3,30 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>非属人YouTube チャンネル設計ツール（Tool1）</title>
-  <meta name="description" content="TTPしたいYouTubeチャンネルのURLを入れると、チャンネル名・概要欄・コンセプトなどの設計書を自動生成。非属人YouTube向け。">
+  <title>非属人YouTube作成ツール（Tool1・Tool2）</title>
+  <meta name="description" content="非属人YouTube向け。Tool1:チャンネル設計書 / Tool2:競合リサーチ＋台本。Gemini APIで生成。">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <header class="site-header">
-    <h1>非属人YouTube チャンネル設計ツール</h1>
-    <p class="lead">TTPしたいチャンネルのURLを入れるだけで、<strong>チャンネル設計書</strong>（名前・概要欄・コンセプト・タグ等）を作成します。Tool1／非属人YouTube作成ツール3本セットの1本目です。</p>
-    <p class="notice">⚠️ 出てきた内容は必ず手直ししてください。YouTubeの開設操作自体はご自身のアカウントで行ってください。</p>
+    <h1>非属人YouTube作成ツール</h1>
+    <p class="lead">Tool1で<strong>チャンネル設計</strong>、Tool2で<strong>競合リサーチ＋台本</strong>まで。Tool3（MP4＋サムネ）は順次追加予定。</p>
+    <p class="notice">⚠️ 出てきた内容は必ず手直ししてください。YouTubeの開設・投稿はご自身のアカウントで行ってください。</p>
+    <nav class="tool-tabs" aria-label="ツール選択">
+      <button type="button" class="tool-tab active" data-tool="tool1">Tool1 チャンネル設計</button>
+      <button type="button" class="tool-tab" data-tool="tool2">Tool2 競合＋台本</button>
+    </nav>
   </header>
 
   <main class="container">
-    <section class="card step" id="step1">
-      <h2><span class="step-num">1</span>Gemini APIキー（無料）を入れる</h2>
-      <p class="hint">Googleが無料で配っている「AIを動かすための鍵」です。ブラウザにだけ保存され、生成時にGoogleへ直接送ります。</p>
+    <section class="card step">
+      <h2><span class="step-num">★</span>Gemini APIキー（共通）</h2>
+      <p class="hint">Tool1・Tool2共通。ブラウザにだけ保存されます。</p>
       <details class="help">
         <summary>🔑 APIキーの取り方</summary>
         <ol>
           <li><a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google AI Studio</a> を開く</li>
-          <li>Googleアカウントでログイン</li>
-          <li>「Create API key」を押す</li>
-          <li><code>AIza…</code> で始まる文字列をコピーして下に貼る</li>
+          <li>「Create API key」→ <code>AIza…</code> をコピー</li>
         </ol>
       </details>
       <label class="field">
@@ -33,57 +35,117 @@
       </label>
     </section>
 
-    <section class="card step" id="step2">
-      <h2><span class="step-num">2</span>参考チャンネル（TTP元）を入力</h2>
-      <label class="field">
-        <span>参考チャンネルURL <em>必須</em></span>
-        <input type="url" id="channel-url" placeholder="https://www.youtube.com/@example">
-      </label>
-      <label class="field">
-        <span>チャンネル情報の貼り付け <em>任意・精度UP</em></span>
-        <textarea id="channel-paste" rows="5" placeholder="YouTubeの「概要」欄の全文、直近の動画タイトル5本程度を貼ると精度が上がります"></textarea>
-      </label>
-      <div class="field-row">
+    <!-- Tool1 -->
+    <div id="panel-tool1" class="tool-panel active">
+      <section class="card step">
+        <h2><span class="step-num">1</span>参考チャンネル（TTP元）</h2>
         <label class="field">
-          <span>ジャンル</span>
-          <select id="genre">
-            <option value="auto">🎲 おまかせ（URLから推定）</option>
-            <option value="commentary">解説型（都市伝説・歴史・雑学）</option>
-            <option value="narration">朗読型（スカッと・感動・ドラマ）</option>
-            <option value="ranking">ランキング型</option>
-            <option value="ai-history">AI歴史・ミステリー</option>
-          </select>
+          <span>参考チャンネルURL <em>必須</em></span>
+          <input type="url" id="t1-channel-url" placeholder="https://www.youtube.com/@example">
         </label>
         <label class="field">
-          <span>差別化したい点 <em>任意</em></span>
-          <input type="text" id="differentiation" placeholder="例：毎日20時更新・女性向け・短尺10分">
+          <span>チャンネル情報の貼り付け <em>任意</em></span>
+          <textarea id="t1-channel-paste" rows="4" placeholder="概要欄・直近の動画タイトル5本など"></textarea>
         </label>
-      </div>
-    </section>
-
-    <section class="card step" id="step3">
-      <h2><span class="step-num">3</span>設計書を生成</h2>
-      <p class="hint">まず参考チャンネルを分析し、そのうえで<strong>あなた用のチャンネル設計書</strong>を出力します（2段階・自動）。</p>
-      <button type="button" id="btn-generate" class="btn-primary" disabled>チャンネル設計書を生成</button>
-      <p id="status" class="status" aria-live="polite"></p>
-    </section>
-
-    <section class="card output hidden" id="output-section">
-      <div class="output-header">
-        <h2>チャンネル設計書</h2>
-        <div class="output-actions">
-          <button type="button" id="btn-copy" class="btn-secondary">コピー</button>
-          <button type="button" id="btn-download" class="btn-secondary">Markdownで保存</button>
+        <div class="field-row">
+          <label class="field">
+            <span>ジャンル</span>
+            <select id="t1-genre">
+              <option value="auto">🎲 おまかせ</option>
+              <option value="commentary">解説型</option>
+              <option value="narration">朗読型</option>
+              <option value="ranking">ランキング型</option>
+              <option value="ai-history">AI歴史・ミステリー</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>差別化したい点 <em>任意</em></span>
+            <input type="text" id="t1-differentiation" placeholder="例：毎日20時・短尺10分">
+          </label>
         </div>
-      </div>
-      <pre id="output" class="output-body"></pre>
-    </section>
+      </section>
+      <section class="card step">
+        <h2><span class="step-num">2</span>設計書を生成</h2>
+        <button type="button" id="t1-btn-generate" class="btn-primary" disabled>チャンネル設計書を生成</button>
+        <p id="t1-status" class="status" aria-live="polite"></p>
+      </section>
+      <section class="card output hidden" id="t1-output-section">
+        <div class="output-header">
+          <h2>チャンネル設計書</h2>
+          <div class="output-actions">
+            <button type="button" id="t1-btn-copy" class="btn-secondary">コピー</button>
+            <button type="button" id="t1-btn-download" class="btn-secondary">Markdown保存</button>
+          </div>
+        </div>
+        <pre id="t1-output" class="output-body"></pre>
+      </section>
+    </div>
+
+    <!-- Tool2 -->
+    <div id="panel-tool2" class="tool-panel">
+      <section class="card step">
+        <h2><span class="step-num">1</span>あなたのチャンネル</h2>
+        <p class="hint">Tool1で設計書を作り、YouTubeでチャンネル開設後にここへ。</p>
+        <label class="field">
+          <span>自チャンネルURL <em>必須</em></span>
+          <input type="url" id="t2-my-channel-url" placeholder="https://www.youtube.com/@your_channel">
+        </label>
+        <label class="field">
+          <span>チャンネル情報の貼り付け <em>任意・精度UP</em></span>
+          <textarea id="t2-my-channel-paste" rows="4" placeholder="概要欄・既存動画タイトル・再生数が分かるもの"></textarea>
+        </label>
+        <label class="field">
+          <span>Tool1の設計書 <em>任意</em></span>
+          <textarea id="t2-design-doc" rows="4" placeholder="Tool1で出した設計書を貼ると台本の一貫性が上がります"></textarea>
+        </label>
+        <div class="field-row">
+          <label class="field">
+            <span>ジャンル</span>
+            <select id="t2-genre">
+              <option value="auto">🎲 おまかせ</option>
+              <option value="commentary">解説型</option>
+              <option value="narration">朗読型</option>
+              <option value="ranking">ランキング型</option>
+              <option value="ai-history">AI歴史・ミステリー</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>動画の尺</span>
+            <select id="t2-length">
+              <option value="medium">中尺（15〜20分）</option>
+              <option value="long">長尺（20〜28分）</option>
+              <option value="short">短尺（5〜10分）</option>
+            </select>
+          </label>
+        </div>
+        <label class="field">
+          <span>今回の動画テーマ <em>任意</em></span>
+          <input type="text" id="t2-video-theme" placeholder="空欄なら分析結果から最適な1本を自動選定">
+        </label>
+      </section>
+      <section class="card step">
+        <h2><span class="step-num">2</span>競合リサーチ＋台本を生成</h2>
+        <p class="hint">自チャンネル分析 → 競合3〜5件リサーチ → 台本・投稿設定まで（3段階・自動）。</p>
+        <button type="button" id="t2-btn-generate" class="btn-primary" disabled>競合リサーチ＋台本を生成</button>
+        <p id="t2-status" class="status" aria-live="polite"></p>
+      </section>
+      <section class="card output hidden" id="t2-output-section">
+        <div class="output-header">
+          <h2>競合リサーチ＋台本</h2>
+          <div class="output-actions">
+            <button type="button" id="t2-btn-copy" class="btn-secondary">コピー</button>
+            <button type="button" id="t2-btn-download" class="btn-secondary">Markdown保存</button>
+          </div>
+        </div>
+        <pre id="t2-output" class="output-body"></pre>
+      </section>
+    </div>
   </main>
 
   <footer class="site-footer">
-    <p>非属人YouTube作成ツール Tool1｜Tool2（競合リサーチ＋台本）・Tool3（MP4＋サムネ）は順次追加予定</p>
+    <p>Tool1 チャンネル設計 ｜ Tool2 競合＋台本 ｜ Tool3 MP4＋サムネ（準備中）</p>
   </footer>
 
-  <script src="app.js"></script>
+  <script type="module" src="app.js"></script>
 </body>
 </html>

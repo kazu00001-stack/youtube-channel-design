@@ -10,7 +10,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const { apiKey, model, systemPrompt, userPrompt, useSearch } = req.body || {};
+  const { apiKey, model, systemPrompt, userPrompt, useSearch, maxOutputTokens } = req.body || {};
 
   if (!apiKey || typeof apiKey !== "string") {
     return res.status(400).json({ error: "APIキーが必要です" });
@@ -42,7 +42,7 @@ export default async function handler(req, res) {
     contents,
     generationConfig: {
       temperature: 0.85,
-      maxOutputTokens: 8192,
+      maxOutputTokens: maxOutputTokens || 8192,
     },
   };
 

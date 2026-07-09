@@ -1,8 +1,21 @@
-# 非属人YouTube チャンネル設計ツール（Tool1）
+# 非属人YouTube作成ツール（Tool1・Tool2）
 
-TTPしたいYouTubeチャンネルのURLから、**チャンネル設計書**（名前・概要欄・コンセプト・タグ等）をGeminiで生成するWebツール。
+**公開URL:** https://youtube-channel-design.vercel.app
 
-非属人YouTube作成ツール3本セットの **Tool1** です。
+| Tool | 機能 |
+|------|------|
+| **Tool1** | 参考チャンネルURL → チャンネル設計書 |
+| **Tool2** | 自チャンネルURL → 競合リサーチ → 台本・投稿設定 |
+| Tool3 | 台本 → MP4＋サムネ（準備中） |
+
+## Tool2 使い方
+
+1. Tool1で設計書を作成し、YouTubeでチャンネル開設
+2. **Tool2**タブを開く
+3. 自チャンネルURL ＋ 任意でTool1設計書を貼り付け
+4. **競合リサーチ＋台本を生成**（3段階・1〜2分）
+
+出力: 競合分析表、タイトル案、フル台本、投稿タグ、Tool3用サムネ文案
 
 ## 使い方（3ステップ）
 
@@ -23,15 +36,9 @@ npx vercel dev
 
 ## Vercel 公開
 
-```bash
-cd "1000.ツール/非属人YouTube-Tool1"
-npx vercel --prod
-```
+**公開URL:** https://youtube-channel-design.vercel.app
 
-または GitHub 連携:
-
-1. このフォルダを public リポジトリ `youtube-channel-design` 等に push
-2. [vercel.com](https://vercel.com) → Import Project → リポジトリ選択 → Deploy
+再デプロイ: Vercel ダッシュボードから `kazu00001-stack/youtube-channel-design` を Deploy
 
 ## GitHub Pages について
 
