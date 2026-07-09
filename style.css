@@ -1,0 +1,208 @@
+:root {
+  --bg: #0f1419;
+  --surface: #1a2332;
+  --surface2: #243044;
+  --text: #e8edf4;
+  --muted: #94a3b8;
+  --accent: #ff4444;
+  --accent2: #ff6b6b;
+  --border: #334155;
+  --ok: #4ade80;
+  --radius: 12px;
+  --font: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.65;
+  font-size: 15px;
+}
+
+a { color: var(--accent2); }
+
+.site-header {
+  padding: 2rem 1.25rem 1rem;
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.site-header h1 {
+  font-size: 1.45rem;
+  margin: 0 0 0.75rem;
+  line-height: 1.35;
+}
+
+.lead { margin: 0 0 0.75rem; color: var(--muted); }
+.lead strong { color: var(--text); }
+
+.notice {
+  font-size: 0.88rem;
+  color: #fbbf24;
+  background: rgba(251, 191, 36, 0.08);
+  border: 1px solid rgba(251, 191, 36, 0.25);
+  border-radius: var(--radius);
+  padding: 0.65rem 0.85rem;
+  margin: 0;
+}
+
+.container {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 0 1.25rem 3rem;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem 1.35rem;
+  margin-bottom: 1rem;
+}
+
+.step h2 {
+  font-size: 1.05rem;
+  margin: 0 0 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.step-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  background: var(--accent);
+  color: #fff;
+  border-radius: 50%;
+  font-size: 0.85rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.hint { color: var(--muted); font-size: 0.92rem; margin: 0 0 0.85rem; }
+
+.help {
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.help summary { cursor: pointer; color: var(--text); }
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 1rem;
+}
+
+.field span { font-size: 0.88rem; font-weight: 600; }
+.field em { font-weight: 400; color: var(--muted); font-style: normal; font-size: 0.82rem; }
+
+.field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+@media (max-width: 560px) {
+  .field-row { grid-template-columns: 1fr; }
+}
+
+input, textarea, select {
+  width: 100%;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface2);
+  color: var(--text);
+  font: inherit;
+}
+
+textarea { resize: vertical; min-height: 100px; }
+
+.btn-primary, .btn-secondary {
+  font: inherit;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  padding: 0.75rem 1.25rem;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--accent), #cc0000);
+  color: #fff;
+  width: 100%;
+}
+
+.btn-primary:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  background: var(--surface2);
+  color: var(--text);
+  border: 1px solid var(--border);
+  font-size: 0.88rem;
+  padding: 0.45rem 0.85rem;
+}
+
+.btn-primary:not(:disabled):hover,
+.btn-secondary:hover { opacity: 0.88; }
+
+.status {
+  margin: 0.85rem 0 0;
+  font-size: 0.92rem;
+  color: var(--muted);
+  min-height: 1.4em;
+}
+
+.status.error { color: #f87171; }
+.status.ok { color: var(--ok); }
+
+.output.hidden { display: none; }
+
+.output-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.output-header h2 { margin: 0; font-size: 1.05rem; }
+
+.output-actions { display: flex; gap: 0.5rem; }
+
+.output-body {
+  margin: 0;
+  padding: 1rem;
+  background: #0a0e14;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: "SF Mono", "Menlo", "Consolas", monospace;
+  font-size: 0.82rem;
+  line-height: 1.55;
+  max-height: 70vh;
+  overflow: auto;
+}
+
+.site-footer {
+  text-align: center;
+  padding: 1.5rem 1rem 2rem;
+  color: var(--muted);
+  font-size: 0.82rem;
+}

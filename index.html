@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>非属人YouTube チャンネル設計ツール（Tool1）</title>
+  <meta name="description" content="TTPしたいYouTubeチャンネルのURLを入れると、チャンネル名・概要欄・コンセプトなどの設計書を自動生成。非属人YouTube向け。">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="site-header">
+    <h1>非属人YouTube チャンネル設計ツール</h1>
+    <p class="lead">TTPしたいチャンネルのURLを入れるだけで、<strong>チャンネル設計書</strong>（名前・概要欄・コンセプト・タグ等）を作成します。Tool1／非属人YouTube作成ツール3本セットの1本目です。</p>
+    <p class="notice">⚠️ 出てきた内容は必ず手直ししてください。YouTubeの開設操作自体はご自身のアカウントで行ってください。</p>
+  </header>
+
+  <main class="container">
+    <section class="card step" id="step1">
+      <h2><span class="step-num">1</span>Gemini APIキー（無料）を入れる</h2>
+      <p class="hint">Googleが無料で配っている「AIを動かすための鍵」です。ブラウザにだけ保存され、生成時にGoogleへ直接送ります。</p>
+      <details class="help">
+        <summary>🔑 APIキーの取り方</summary>
+        <ol>
+          <li><a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google AI Studio</a> を開く</li>
+          <li>Googleアカウントでログイン</li>
+          <li>「Create API key」を押す</li>
+          <li><code>AIza…</code> で始まる文字列をコピーして下に貼る</li>
+        </ol>
+      </details>
+      <label class="field">
+        <span>APIキー</span>
+        <input type="password" id="api-key" placeholder="AIza..." autocomplete="off">
+      </label>
+    </section>
+
+    <section class="card step" id="step2">
+      <h2><span class="step-num">2</span>参考チャンネル（TTP元）を入力</h2>
+      <label class="field">
+        <span>参考チャンネルURL <em>必須</em></span>
+        <input type="url" id="channel-url" placeholder="https://www.youtube.com/@example">
+      </label>
+      <label class="field">
+        <span>チャンネル情報の貼り付け <em>任意・精度UP</em></span>
+        <textarea id="channel-paste" rows="5" placeholder="YouTubeの「概要」欄の全文、直近の動画タイトル5本程度を貼ると精度が上がります"></textarea>
+      </label>
+      <div class="field-row">
+        <label class="field">
+          <span>ジャンル</span>
+          <select id="genre">
+            <option value="auto">🎲 おまかせ（URLから推定）</option>
+            <option value="commentary">解説型（都市伝説・歴史・雑学）</option>
+            <option value="narration">朗読型（スカッと・感動・ドラマ）</option>
+            <option value="ranking">ランキング型</option>
+            <option value="ai-history">AI歴史・ミステリー</option>
+          </select>
+        </label>
+        <label class="field">
+          <span>差別化したい点 <em>任意</em></span>
+          <input type="text" id="differentiation" placeholder="例：毎日20時更新・女性向け・短尺10分">
+        </label>
+      </div>
+    </section>
+
+    <section class="card step" id="step3">
+      <h2><span class="step-num">3</span>設計書を生成</h2>
+      <p class="hint">まず参考チャンネルを分析し、そのうえで<strong>あなた用のチャンネル設計書</strong>を出力します（2段階・自動）。</p>
+      <button type="button" id="btn-generate" class="btn-primary" disabled>チャンネル設計書を生成</button>
+      <p id="status" class="status" aria-live="polite"></p>
+    </section>
+
+    <section class="card output hidden" id="output-section">
+      <div class="output-header">
+        <h2>チャンネル設計書</h2>
+        <div class="output-actions">
+          <button type="button" id="btn-copy" class="btn-secondary">コピー</button>
+          <button type="button" id="btn-download" class="btn-secondary">Markdownで保存</button>
+        </div>
+      </div>
+      <pre id="output" class="output-body"></pre>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p>非属人YouTube作成ツール Tool1｜Tool2（競合リサーチ＋台本）・Tool3（MP4＋サムネ）は順次追加予定</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
